@@ -47,6 +47,9 @@ MSG_TYPES = [
 EVENT_TYPES = [
     'workspace',
     'output',
+    'mode',
+    'window',
+    'barconfig_update',
 ]
 
 
@@ -291,7 +294,10 @@ class Subscription(threading.Thread):
     subscribed = False
     type_translation = {
         'workspace': 'get_workspaces',
-        'output': 'get_outputs'
+        'output': 'get_outputs',
+        'mode': None,
+        'window': None,
+        'barconfig_update': None
     }
     
     def __init__(self, callback, event_type, event=None, event_socket=None,
@@ -336,13 +342,13 @@ class Subscription(threading.Thread):
         self.subscribed = True
         while self.subscribed:
             event = self.event_socket.receive()
+            data = None
             if not event:  # skip an iteration if event is None
                 continue
             if not self.event or ('change' in event and event['change'] == self.event):
                 msg_type = self.type_translation[self.event_type]
-                data = self.data_socket.get(msg_type)
-            else:
-                data = None
+                if msg_type:
+                    data = self.data_socket.get(msg_type)
             self.callback(event, data, self)
         self.close()
     
